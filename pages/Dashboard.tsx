@@ -90,7 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [transactions, mrr]);
 
   const analytics = useMemo(() => {
-    const mrrProgress = ((mrr / strategy.mrrTarget) * 100).toFixed(1);
+    const mrrProgress = strategy.mrrTarget > 0 ? ((mrr / strategy.mrrTarget) * 100).toFixed(1) : "0";
     const gap = Math.max(0, strategy.mrrTarget - mrr);
     const planAnalysis = strategy.plans.map(p => ({
       ...p,

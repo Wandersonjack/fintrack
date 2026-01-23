@@ -71,7 +71,7 @@ export const supabaseService = {
     const mappedUpdates: any = { ...updates };
     if (updates.accountType) mappedUpdates.account_type = updates.accountType;
     if (updates.isRecurring !== undefined) mappedUpdates.is_recurring = updates.isRecurring;
-    
+
     delete mappedUpdates.id;
     delete mappedUpdates.accountType;
     delete mappedUpdates.isRecurring;
@@ -101,8 +101,20 @@ export const supabaseService = {
         .maybeSingle();
 
       if (error) return null;
-      // If profile doesn't exist, the trigger might not have run for an old user, return defaults
-      if (!data) return { mrr: 0, mrrTarget: 0 };
+
+      // If profile doesn't exist, create it (fail-safe for trigger timing)
+      if (!data) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ id: userId, mrr: 0, mrr_target: 0 });
+
+        if (insertError) {
+          console.error('CRITICAL: Profile creation failed. Check RLS policies:', insertError.message);
+        } else {
+          console.log('Successfully created missing profile for user:', userId);
+        }
+        return { mrr: 0, mrrTarget: 0 };
+      }
 
       return {
         mrr: data.mrr || 0,
